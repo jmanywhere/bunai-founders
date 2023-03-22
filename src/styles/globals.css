@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer layer{
+  html{
+    @apply bg-primary_bg;
+    color-scheme: dark;
+  }
+}
+
+@layer utilities {
+  .primaryText{
+    background: linear-gradient(251.08deg,#a634ff -16.82%,#a535ff -8.43%,#a239ff -.04%,#9d3fff 8.35%,#9548ff 16.74%,#8b54ff 25.13%,#8062fe 33.52%,#7372fe 41.91%,#6681fe 50.3%,#5991fe 58.69%,#4e9ffd 67.08%,#44abfd 75.47%,#3cb4fd 83.86%,#37bafd 92.25%,#34befd 100.64%,#33bffd 109.03%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+}

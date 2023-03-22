@@ -1,28 +1,17 @@
-# Create T3 App
+# Bunny AI Founders Claim page
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+This page is meant for all Founder's NFT holders to claim their rewards collected by the BUNAI trades.
 
-## What's next? How do I make an app with this?
+## Considerations
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+This is a simple Single Page Dapp. Hosting will happen on Vercel due to simplicity.
+DNS is provided by the [bunnyai.app](https://bunnyai.app) dev team.
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Usage
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+In order to use this page:
 
-## Learn More
-
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
-
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
-
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
-
-## How do I deploy this?
-
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+1. First you'll need to connect your wallet to the page.
+2. Make sure your wallet holds any of the [Bunny AI Founders NFT](https://etherscan.io/address/0xbb520ce73fd6e3f5777f583705db081ba3dd65ac) - [Collection](https://opensea.io/collection/bunny-ai-founder-nfts)
+3. Once connected, the page will automatically get all the NFT ID's you own and calculate your rewards.
+4. In order to claim rewards, you will need to approve BUNAI for the contract to BURN. (DO NOT BURN BEFORE OR ON YOUR OWN). Each claim requires a BURN of _initially_ 100 BUNAI.

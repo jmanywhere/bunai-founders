@@ -9,9 +9,14 @@
     "start": "next start"
   },
   "dependencies": {
+    "@web3modal/ethereum": "^2.2.2",
+    "@web3modal/react": "^2.2.2",
+    "daisyui": "^2.51.5",
+    "ethers": "^5",
     "next": "^13.2.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "wagmi": "^0.12.6",
     "zod": "^3.20.6"
   },
   "devDependencies": {
