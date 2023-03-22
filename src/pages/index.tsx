@@ -72,20 +72,32 @@ const Home: NextPage = () => {
   }, [fetchNextPage, owners]);
 
   const ownedNFTs = useMemo(() => {
-    if (owners?.pages.length === 0) return [] as number[];
-    return (owners?.pages || []).reduce((acc, page, pageIndex) => {
-      const owned: number[] = [];
-      page.map((owner, addressIndex) => {
-        if (
-          owner ===
-          // address
-          "0x126E8c16b8aD86fd3DC0E8f49583E4486E14DB9D"
-        )
-          owned.push(pageIndex * 20 + (addressIndex + 1));
-      });
-      return [...acc, ...owned];
-    }, [] as number[]);
+    if (owners?.pages.length === 0 || !owners?.pages) return [] as number[];
+    return (owners.pages as Array<Array<`0x${string}`>>).reduce(
+      (acc, page, pageIndex: number) => {
+        const owned: number[] = [];
+        page.map((owner, addressIndex) => {
+          if (
+            owner ===
+            // address
+            "0x126E8c16b8aD86fd3DC0E8f49583E4486E14DB9D"
+          )
+            owned.push(pageIndex * 20 + (addressIndex + 1));
+        });
+        return [...acc, ...owned];
+      },
+      [] as number[]
+    );
   }, [owners]);
+
+  const { data: pendingClaim, isLoading: claimLoading } = useContractRead({
+    abi: ABI.FoundersLoot,
+    address: "0x0000000",
+    functionName:
+      ownedNFTs.length > 1 ? "pendingRewardFromMultiple" : "pendingRewards",
+    args: ownedNFTs.length > 1 ? [ownedNFTs] : [ownedNFTs[0] || 0],
+    enabled: ownedNFTs.length > 0,
+  });
   return (
     <>
       <Head>
@@ -137,7 +149,13 @@ const Home: NextPage = () => {
           <div className=" min-w-[220px] rounded-xl border-2 border-purple-500 px-4 py-6 text-center">
             Pending Claim
             <br />
-            {(isReady && (isLoading ? "Loading..." : data?.toString())) || "-"}
+            {(isReady &&
+              (claimLoading
+                ? "Loading..."
+                : pendingClaim
+                ? commify(formatEther(pendingClaim?.toString()))
+                : "-")) ||
+              "-"}
           </div>
           <button className="rounded-full bg-indigo-600 px-4 py-2 hover:bg-indigo-400 hover:text-black">
             Approve $BUNAI
