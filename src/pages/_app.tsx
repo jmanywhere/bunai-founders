@@ -37,7 +37,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
         ethereumClient={ethereumClient}
         themeMode="dark"
         themeVariables={{
-          "--w3m-accent-color": "#8468de",
+          "--w3m-accent-color": "#0377c9",
         }}
       />
     </>
