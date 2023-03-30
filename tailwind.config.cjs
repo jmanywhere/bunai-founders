@@ -7,6 +7,8 @@ const config = {
       {
         myTheme: {
           'base-100': "#121826",
+          "secondary": "#04bf9f",
+          "primary": "#0377c9",
         }
       }
     ]
