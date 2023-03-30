@@ -1,6 +1,7 @@
 import { Web3Button } from "@web3modal/react";
 import { type NextPage } from "next";
 import Head from "next/head";
+import Image from "next/image";
 import Link from "next/link";
 import {
   useAccount,
@@ -165,13 +166,21 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="min-h-screen w-full pb-10">
-        <header className="flex justify-between px-4 py-6">
+        <header className="flex items-center justify-between px-4 py-6">
           <Link
-            className="text-primary_text text-4xl font-bold"
-            href="/"
+            className="text-primary_text group flex flex-row items-center rounded-xl p-4 font-bold hover:bg-primary/10"
+            href="https://bunai.ai"
             target="_blank"
           >
-            BunnyAI
+            <Image
+              src="/BUNAIHEADLOGO.png"
+              alt="Bunny AI NFT Logo"
+              width={1243 / 20}
+              height={1383 / 20}
+            />
+            <div className="primaryText pl-4 text-xl group-hover:text-white">
+              Bunny AI Founders
+            </div>
           </Link>
           <Web3Button />
         </header>
