@@ -2,36 +2,64 @@ import { Web3Button } from "@web3modal/react";
 import { type NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import { useAccount, useContractInfiniteReads, useContractRead } from "wagmi";
-import { AddressZero } from "@ethersproject/constants";
-import { commify, formatEther } from "ethers/lib/utils.js";
+import {
+  useAccount,
+  useContractInfiniteReads,
+  useContractRead,
+  useContractReads,
+  useContractWrite,
+  usePrepareContractWrite,
+} from "wagmi";
+import { AddressZero, MaxUint256 } from "@ethersproject/constants";
+import { commify, formatEther, parseEther } from "ethers/lib/utils.js";
+import flatten from "lodash/flatten";
 // Abis
 import ABI from "@/abi/FoundersAbi";
 import { erc20ABI } from "wagmi";
-import { useLayoutEffect, useState, useEffect, useMemo } from "react";
+import {
+  useLayoutEffect,
+  useState,
+  useEffect,
+  useMemo,
+  startTransition,
+} from "react";
+import classNames from "classnames";
+
+const BUNAI_ADDRESS = "0xE9E6c22ABBd1Aa149EAD885A1B25d127D28c0803";
+const FOUNDERS_LOOT_ADDRESS = "0x9cc53Fa0F885c53fF3BfAB34b29DEBF6A1Cf1f0E";
+const FOUNDERS_NFT_ADDRESS = "0xbb520ce73fd6e3f5777f583705db081ba3dd65ac";
 
 const Home: NextPage = () => {
+  const [isDefConnected, setIsDefConnected] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
 
-  const { data, isLoading, error } = useContractRead({
+  const { data, isLoading } = useContractRead({
     abi: ABI.FounderNFTABI,
-    address: "0xbb520ce73fd6e3f5777f583705db081ba3dd65ac",
+    address: FOUNDERS_NFT_ADDRESS,
     functionName: "balanceOf",
-    args: ["0x126E8c16b8aD86fd3DC0E8f49583E4486E14DB9D"], //!address ? [AddressZero] : [address],
+    args: !address ? [AddressZero] : [address],
     enabled: !!address,
   });
 
-  const {
-    data: bunaiBalance,
-    isLoading: bunaiLoading,
-    error: bunaiError,
-  } = useContractRead({
-    abi: erc20ABI,
-    address: "0xC3158937C9E3DFA27267529b8ac429240e6fE9e7",
-    functionName: "balanceOf",
-    args: ["0x42b756987dEE8a21508C4E470bfEfB5e36A5E4E4"], //!address ? [AddressZero] : [address],
+  const { data: bunaiBalance } = useContractReads({
+    contracts: [
+      {
+        abi: erc20ABI,
+        address: BUNAI_ADDRESS,
+        functionName: "balanceOf",
+        args: !address ? [AddressZero] : [address],
+      },
+      {
+        abi: erc20ABI,
+        address: BUNAI_ADDRESS,
+        functionName: "allowance",
+        args: !address
+          ? [AddressZero, AddressZero]
+          : [address, FOUNDERS_LOOT_ADDRESS],
+      },
+    ],
     enabled: !!address,
   });
 
@@ -39,19 +67,14 @@ const Home: NextPage = () => {
     setIsReady(true);
   }, [setIsReady]);
 
-  const {
-    data: owners,
-    isError,
-    isLoading: ownersLoading,
-    fetchNextPage,
-  } = useContractInfiniteReads({
+  const { data: owners, fetchNextPage } = useContractInfiniteReads({
     cacheKey: "ownerOfTokens",
     contracts: (pageParam: number) => {
       const baseParam = pageParam || 1;
       const allRequests = 20;
       const baseParams = {
         abi: ABI.FounderNFTABI,
-        address: "0xbb520ce73fd6e3f5777f583705db081ba3dd65ac" as `0x${string}`,
+        address: FOUNDERS_NFT_ADDRESS as `0x${string}`,
         functionName: "ownerOf",
       };
       const allCalls = Array.from({ length: allRequests }, (_, i) => ({
@@ -63,6 +86,7 @@ const Home: NextPage = () => {
     getNextPageParam(_, pages) {
       return pages.length * 20 + 1;
     },
+    enabled: data?.gt(0),
   });
   useEffect(() => {
     if ((owners?.pages.length || 0) > 0 && (owners?.pages.length || 0) < 5) {
@@ -71,33 +95,68 @@ const Home: NextPage = () => {
     }
   }, [fetchNextPage, owners]);
 
-  const ownedNFTs = useMemo(() => {
+  useEffect(() => {
+    startTransition(() => {
+      setIsDefConnected(isConnected);
+    });
+  }, [isConnected, setIsDefConnected]);
+
+  const ownedNFTs: number[] = useMemo(() => {
     if (owners?.pages.length === 0 || !owners?.pages) return [] as number[];
-    return (owners.pages as Array<Array<`0x${string}`>>).reduce(
+    const ids = (owners.pages as Array<Array<`0x${string}`>>).reduce(
       (acc, page, pageIndex: number) => {
         const owned: number[] = [];
         page.map((owner, addressIndex) => {
-          if (
-            owner ===
-            // address
-            "0x126E8c16b8aD86fd3DC0E8f49583E4486E14DB9D"
-          )
+          if (owner === address)
             owned.push(pageIndex * 20 + (addressIndex + 1));
         });
         return [...acc, ...owned];
       },
       [] as number[]
     );
-  }, [owners]);
+    if (ids.length / 3 > 1) {
+      const tempIds: Array<number | number[]> = ids.map((id, index) => {
+        if ((index + 1) % 3 === 0) return [id, 0];
+        else return id;
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const flatIds: number[] = flatten<number | number[]>(tempIds) as number[];
+      return flatIds;
+    }
+    return ids;
+  }, [owners, address]);
 
   const { data: pendingClaim, isLoading: claimLoading } = useContractRead({
     abi: ABI.FoundersLoot,
-    address: "0x0000000",
+    address: FOUNDERS_LOOT_ADDRESS,
     functionName:
       ownedNFTs.length > 1 ? "pendingRewardFromMultiple" : "pendingRewards",
     args: ownedNFTs.length > 1 ? [ownedNFTs] : [ownedNFTs[0] || 0],
     enabled: ownedNFTs.length > 0,
   });
+
+  const { config: approveConfig } = usePrepareContractWrite({
+    abi: erc20ABI,
+    address: BUNAI_ADDRESS,
+    functionName: "approve",
+    args: [FOUNDERS_LOOT_ADDRESS, parseEther("1000000")],
+    enabled: ownedNFTs.length > 0,
+  });
+
+  const { config: claimConfig, error: configClaimError } =
+    usePrepareContractWrite({
+      abi: ABI.FoundersLoot,
+      address: FOUNDERS_LOOT_ADDRESS,
+      functionName: ownedNFTs.length > 1 ? "claimMultiple" : "claim",
+      args: ownedNFTs.length > 1 ? [ownedNFTs] : [ownedNFTs[0] || 0],
+      enabled: ownedNFTs.length > 0,
+    });
+
+  const { write: approveBUNAI, isLoading: approveLoading } =
+    useContractWrite(approveConfig);
+
+  const { write: claimETH, isLoading: claimETHLoading } =
+    useContractWrite(claimConfig);
   return (
     <>
       <Head>
@@ -105,7 +164,7 @@ const Home: NextPage = () => {
         <meta name="description" content="Bunny AI NFT Founders Reward Pool" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="min-h-screen w-full">
+      <main className="min-h-screen w-full pb-10">
         <header className="flex justify-between px-4 py-6">
           <Link
             className="text-primary_text text-4xl font-bold"
@@ -124,42 +183,101 @@ const Home: NextPage = () => {
           </h1>
         </div>
         <section className="flex flex-col items-center justify-center gap-y-4 pt-12">
-          <div className=" min-w-[220px] rounded-xl border-2 border-purple-500 px-4 py-6 text-center">
-            $BUNAI in Wallet
-            <br />
-            {(isReady &&
-              (isLoading
-                ? "Loading..."
-                : bunaiBalance
-                ? commify(formatEther(bunaiBalance.toString())).split(".")[0]
-                : "0")) ||
-              "0"}
+          <div className="flex flex-col items-center justify-center gap-4 md:flex-row">
+            <div className="stats shadow">
+              <div className="stat min-w-[260px] bg-primary/25">
+                <div className="stat-title text-center">$BUNAI in Wallet</div>
+                <div className="stat-value py-2 text-center">
+                  {(isReady &&
+                    (isLoading
+                      ? "Loading..."
+                      : bunaiBalance?.[0]
+                      ? commify(formatEther(bunaiBalance[0].toString())).split(
+                          "."
+                        )[0]
+                      : "0")) ||
+                    "0"}
+                </div>
+                <div className="stat-desc text-center">
+                  {isLoading ? "Loading..." : "Balance in Wallet"}
+                </div>
+              </div>
+            </div>
+            <div className="stats shadow">
+              <div className="stat min-w-[260px] bg-primary/25">
+                <div className="stat-title text-center">Total NFTs</div>
+                <div className="stat-value py-2 text-center">
+                  {(isReady && (isLoading ? "Loading..." : data?.toString())) ||
+                    "-"}
+                </div>
+                <div className="stat-desc text-center">
+                  Founder NFTs in Wallet
+                </div>
+              </div>
+            </div>
           </div>
-          <div className=" min-w-[220px] rounded-xl border-2 border-purple-500 px-4 py-6 text-center">
-            Total NFTs
-            <br />
-            {isReady && isLoading ? "Loading..." : data?.toString() || "-"}
+          <div className="stats shadow">
+            <div className="stat min-w-[260px] bg-primary/25">
+              <div className="stat-title text-center">NFT IDs</div>
+              <div className="stat-value whitespace-pre break-words py-2 text-center">
+                {(isReady &&
+                  ownedNFTs
+                    .map((id, index) =>
+                      id == 0
+                        ? "\n"
+                        : index + 1 === ownedNFTs.length
+                        ? id
+                        : `${id}, `
+                    )
+                    .join("")) ||
+                  "0"}
+              </div>
+              <div className="stat-desc text-center">IDs in Wallet</div>
+            </div>
           </div>
-          <div className=" min-w-[220px] rounded-xl border-2 border-purple-500 px-4 py-6 text-center">
-            NFT IDs
-            <br />
-            {(isReady && ownedNFTs.join(", ")) || "0"}
+          <div className="stats shadow">
+            <div className="stat min-w-[260px] bg-primary/25">
+              <div className="stat-title text-center">Pending Claim</div>
+              <div className="stat-value whitespace-pre break-words py-2 text-center">
+                {(isReady &&
+                  (claimLoading
+                    ? "Loading..."
+                    : pendingClaim
+                    ? commify(formatEther(pendingClaim?.toString()))
+                    : "-")) ||
+                  "-"}
+              </div>
+              <div className="stat-desc text-center">ETH pending claim</div>
+            </div>
           </div>
-
-          <div className=" min-w-[220px] rounded-xl border-2 border-purple-500 px-4 py-6 text-center">
-            Pending Claim
-            <br />
-            {(isReady &&
-              (claimLoading
-                ? "Loading..."
-                : pendingClaim
-                ? commify(formatEther(pendingClaim?.toString()))
-                : "-")) ||
-              "-"}
-          </div>
-          <button className="rounded-full bg-indigo-600 px-4 py-2 hover:bg-indigo-400 hover:text-black">
-            Approve $BUNAI
-          </button>
+          {address && isConnected && isDefConnected && (
+            <>
+              {bunaiBalance?.[1]?.lt(parseEther("100").mul(ownedNFTs.length)) ||
+              bunaiBalance?.[1].eq(0) ? (
+                <button
+                  className={classNames(
+                    "btn-secondary btn-lg btn",
+                    approveLoading ? "loading" : ""
+                  )}
+                  onClick={approveBUNAI}
+                >
+                  {approveLoading ? "Loading" : "Approve $BUNAI"}
+                </button>
+              ) : null}
+              {bunaiBalance?.[1]?.gt(parseEther("100")) ? (
+                <button
+                  className={classNames(
+                    "btn-primary btn-lg btn",
+                    claimETHLoading ? "loading" : ""
+                  )}
+                  disabled={!!configClaimError}
+                  onClick={claimETH}
+                >
+                  {claimETHLoading ? "Loading" : "Claim Pending"}
+                </button>
+              ) : null}
+            </>
+          )}
         </section>
       </main>
     </>
