@@ -11,7 +11,7 @@ import {
   useContractWrite,
   usePrepareContractWrite,
 } from "wagmi";
-import { AddressZero, MaxUint256 } from "@ethersproject/constants";
+import { AddressZero } from "@ethersproject/constants";
 import { commify, formatEther, parseEther } from "ethers/lib/utils.js";
 import flatten from "lodash/flatten";
 // Abis
