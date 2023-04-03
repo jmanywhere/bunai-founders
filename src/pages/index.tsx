@@ -26,8 +26,8 @@ import {
 } from "react";
 import classNames from "classnames";
 
-const BUNAI_ADDRESS = "0xE9E6c22ABBd1Aa149EAD885A1B25d127D28c0803";
-const FOUNDERS_LOOT_ADDRESS = "0x9cc53Fa0F885c53fF3BfAB34b29DEBF6A1Cf1f0E";
+const BUNAI_ADDRESS = "0x4e647c6F3ba33FF9819c167A60ad0bB70ddEBcD0";
+const FOUNDERS_LOOT_ADDRESS = "0xE7983087D9354500ACb95f64aE35280514B09e2F";
 const FOUNDERS_NFT_ADDRESS = "0xbb520ce73fd6e3f5777f583705db081ba3dd65ac";
 
 const Home: NextPage = () => {
@@ -207,9 +207,7 @@ const Home: NextPage = () => {
                       : "0")) ||
                     "0"}
                 </div>
-                <div className="stat-desc text-center">
-                  {isLoading ? "Loading..." : "Balance in Wallet"}
-                </div>
+                <div className="stat-desc text-center">Balance in Wallet</div>
               </div>
             </div>
             <div className="stats shadow">
